@@ -9,4 +9,4 @@
  
  Use 'wasd' keys to move, 'b' to undo a move, and 'p' to exit
  
- ![2048 clone screenshot](screenshot.png)
+ ![](screenshot.PNG)

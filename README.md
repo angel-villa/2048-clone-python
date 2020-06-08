@@ -8,3 +8,5 @@
  Run ``python clone.pyw`` from command line or open with file explorer
  
  Use 'wasd' keys to move, 'b' to undo a move, and 'p' to exit
+ 
+ ![2048 clone screenshot](screenshot.png)

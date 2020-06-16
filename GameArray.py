@@ -1,23 +1,28 @@
 # Angel Villa
 
 import random 
-import sys
 
+''' 
+# no longer used
+# uncomment if you want to use print_game_state() on GameArray object (draws array to terminal)
 def print_space(n):
     print(" " * n, end ="")
+'''
 
 class GameArray:
     def __init__(self, size):
         self.size = size
         self.arr = [[0 for x in range(self.size)] for y in range(self.size)]
-        self.previous_arr = self.get_arr()
-        # am = already merged
+        
+        # am = already merged, used to keep track of tiles that have been merged into
         self.am = [[False for x in range(self.size)] for y in range(self.size)]
         self.undo_moves = [0 for x in range(20)]
         
+    # reset the am array after each turn
     def reset_merged(self):
         self.am = [[False for x in range(self.size)] for y in range(self.size)]
         
+    # returns the contents of the current game array, using this to prevent referencing issues
     def get_arr(self):
         temp = [[0 for x in range(self.size)] for y in range(self.size)]
         for i in range(self.size):
@@ -25,6 +30,7 @@ class GameArray:
                 temp[i][j] = self.arr[i][j]
         return temp
         
+    # pop from undo_moves array to undo to previous turn's array
     def undo(self):
         if isinstance(self.undo_moves[-1], list):
             temp_arr = self.undo_moves.pop(-1)
@@ -47,6 +53,9 @@ class GameArray:
         decide_int = random.randint(0, num_open - 1)
         refer_int = random.randint(1, 10)
 
+        # add new tile to an empty space with probabilities
+        # p(new tile == 2) = 0.9
+        # p(new tile == 4) = 0.1
         if num_open != 0:
             for i in range(0, self.size):
                 for j in range(0, self.size):
@@ -62,9 +71,14 @@ class GameArray:
     def can_shift_down(self):
         empty_count = 0
         merge_count = 0
-    
+        
+        # for every tile in the array...
         for j in range(0, self.size):
             for i in range(self.size - 1, -1, -1):
+                # ...look downwards
+                #   if      there is a same-value tile downhill with nothing in between,
+                #   or if   there is space between the tile and the next downhill tile
+                # the array can shift, return true
                 if i > 0 and self.arr[i][j] != 0 and self.arr[i][j] == self.arr[i - 1][j]:
                     merge_count += 1
                 for k in range(self.size - 1, i, -1):
@@ -79,7 +93,8 @@ class GameArray:
     def can_shift_left(self):
         empty_count = 0
         merge_count = 0
-    
+        
+        # see can_shift_down
         for i in range(0, self.size):
             for j in range(0, self.size):
                 if j < self.size - 1 and self.arr[i][j] != 0 and self.arr[i][j] == self.arr[i][j + 1]:
@@ -97,6 +112,7 @@ class GameArray:
         empty_count = 0
         merge_count = 0
     
+        # see can_shift_down
         for i in range(0, self.size):
             for j in range(self.size - 1, -1, -1):
                 if j > 0 and self.arr[i][j] != 0 and self.arr[i][j] == self.arr[i][j - 1]:
@@ -114,6 +130,7 @@ class GameArray:
         empty_count = 0
         merge_count = 0
     
+        # see can_shift_down
         for i in range(0, self.size):
             for j in range(0, self.size):
                 if i < self.size - 1 and self.arr[i][j] != 0 and self.arr[i][j] == self.arr[i + 1][j]:
@@ -138,9 +155,15 @@ class GameArray:
                 k += 1
         
         if direction == 'w' and self.can_shift_up():
+            # append the current array "prev" (I know...) to undo_moves array
+            # dequeue from undo moves such that it does not exceed 20 moves
             self.undo_moves.append(prev);
             if len(self.undo_moves) > 20:
                 self.undo_moves = self.undo_moves[1:]
+                
+            # convoluted logic to transform (shift) game array based on the input move
+            # I wonder if there's a DP algorithm that I'm missing
+            # it works, though 8^)
             for j in range(0, self.size):
                 for i in range(0, self.size):
                     if self.arr[i][j] != 0:
@@ -158,7 +181,10 @@ class GameArray:
                                 for l in range(i - 1, k, -1):
                                     if self.arr[l][j] != 0:
                                         empty_between += 1
-                                # Need to prevent [k,j] from getting merged again.
+                                        
+                                # if a tile was just merged-into this turn, do not use it to merge again
+                                # this little bug (tile merged more than once) was unbeknownst to me for a while,
+                                # luckily the fix was small and simple by creating the 'already merged' array
                                 if i - 1 == k and self.am[k][j] == False:
                                     self.arr[i][j] = 0
                                     self.arr[k][j] = self.arr[k][j] * 2
@@ -169,7 +195,8 @@ class GameArray:
                                     self.am[k][j] = True
             self.add_next()
             self.reset_merged()
-            self.previous_arr = temp_previous_arr
+            
+        # see if statement above
         elif direction == 'a' and self.can_shift_left():
             self.undo_moves.append(prev);
             if len(self.undo_moves) > 20:
@@ -201,7 +228,8 @@ class GameArray:
                                     self.am[i][k] = True
             self.add_next()              
             self.reset_merged()
-            self.previous_arr = temp_previous_arr
+            
+        # see if statement above
         elif direction == 's' and self.can_shift_down():
             self.undo_moves.append(prev);
             if len(self.undo_moves) > 20:
@@ -235,7 +263,8 @@ class GameArray:
                                     
             self.add_next()      
             self.reset_merged()
-            self.previous_arr = temp_previous_arr
+            
+        # see if statement above
         elif direction == 'd' and self.can_shift_right():
             self.undo_moves.append(prev);
             if len(self.undo_moves) > 20:
@@ -267,12 +296,16 @@ class GameArray:
                                     self.am[i][k] = True
             self.add_next()      
             self.reset_merged()
-            self.previous_arr = temp_previous_arr
+            
+        # undo if 'b' is pressed
         elif direction == 'b' and (len(self.undo_moves) >= 1):
             self.undo()
         
-                
-    def update_game_state(self):
+'''
+    # draw game board to terminal
+    # no longer used, we pygame now
+    # uncomment if you want to feel like a hacker playing 2048 on a black and green terminal
+    def print_game_state(self):
         print("_" * (self.size*6))
         for i in range(0, self.size):
             print('|')
@@ -285,6 +318,4 @@ class GameArray:
                     print("|",end ="")
             print("\n")
             print("_" * (self.size*6))
-        sys.stdout.flush()          
-    
-
+'''

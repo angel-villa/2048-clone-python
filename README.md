@@ -7,6 +7,6 @@
  
  Run ``python clone.pyw`` from command line or open with file explorer
  
- Use 'wasd' keys to move, 'b' to undo a move, and 'p' to exit
+ The superior version of this game can be found [here.](https://angelvilla.me/pages/clone.html) But if you really want to play this one, use 'wasd' keys to move, 'b' to undo a move, and 'p' to exit
  
  ![](screenshot.PNG)

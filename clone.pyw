@@ -1,6 +1,7 @@
 # Angel Villa
 
 # the commented lines are not integral to the gameplay, I simply used them to write the game board and input to a file
+# need to find a way to prevent pygame from freezing, stackoverflow suggestions did not work after some short testing
 
 import pygame
 import keyboard
@@ -9,27 +10,32 @@ import time
 import GameArray
 import GameWindow
 
-
+# mapping inputs to integers for writing to file
 keys = {'w' : '1', 'a' : '2', 's' : '3', 'd' : '4'}
 
 # def remove_line(file):
     # lines = file.readlines()
     # lines = lines[:-1]
-            
+
+# main game loop
 def main():
     # f = open("train_2048.txt", "a+")
-    board = GameArray.GameArray(4)
+    # size is the size of the grid, 4 is the original game
+    size = 4
+    board = GameArray.GameArray(size)
     window = GameWindow.GameWindow(board.size)
+    
+    # add two tiles to start the game
     board.add_next()
     board.add_next()
+    
     running = True
     while running:
-        
         initial_state = board.get_arr()
         
         window.update_game_state(board.arr)
         pygame.event.get()
-        
+                
         move = keyboard.read_key()
         move = move + " "
         wasd_in = move[0]

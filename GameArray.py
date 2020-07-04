@@ -12,11 +12,12 @@ def print_space(n):
 class GameArray:
     def __init__(self, size):
         self.size = size
+        self.score = 0
         self.arr = [[0 for x in range(self.size)] for y in range(self.size)]
-        
         # am = already merged, used to keep track of tiles that have been merged into
         self.am = [[False for x in range(self.size)] for y in range(self.size)]
         self.undo_moves = [0 for x in range(20)]
+        self.undo_score = [0 for x in range(20)]
         
     # reset the am array after each turn
     def reset_merged(self):
@@ -30,10 +31,42 @@ class GameArray:
                 temp[i][j] = self.arr[i][j]
         return temp
         
+    # returns the max tile value of the game array
+    def max_tile(self):
+        return max(max(row) for row in self.arr)
+        
+    # returns the value of the top right corner tile
+    def corner_tile(self):
+        return self.arr[0][self.size-1]
+        
+    def left_col_sum(self):
+        temp_sum = 0
+        for row in self.arr:
+            temp_sum += row[self.size-1]
+        return temp_sum
+        
+    def top_right_weighted_sum(self):
+        temp_sum = 0
+        ascend_row = False
+        weight = int(self.size**2)
+        for j in range(self.size-1, -1, -1):
+            ascend_row = not ascend_row
+            if ascend_row:
+                for i in range(self.size):
+                    temp_sum += 2**(weight)/(2**int(self.size**2)) * self.arr[i][j]
+                    weight -= 1
+            else:
+                for i in range(self.size-1, -1, -1):
+                    temp_sum += 2**(weight)/(2**int(self.size**2)) * self.arr[i][j]
+                    weight -= 1
+        return temp_sum
+                    
     # pop from undo_moves array to undo to previous turn's array
     def undo(self):
-        if isinstance(self.undo_moves[-1], list):
-            temp_arr = self.undo_moves.pop(-1)
+        if self.undo_moves:
+            self.score = self.undo_score.pop()
+            
+            temp_arr = self.undo_moves.pop()
             k = 0
             for i in range(self.size):
                 for j in range(self.size):
@@ -65,8 +98,19 @@ class GameArray:
                         elif decide_int == loop_count and refer_int <= 9:
                             self.arr[i][j] = 2
                         loop_count += 1
-        elif num_open == 0:
-            print("You lose.")
+        # elif num_open == 0:
+            # print("You lose.")
+            
+    def can_shift(self, key):
+        if key == 's':
+            return self.can_shift_down()
+        elif key == 'a':
+            return self.can_shift_left()
+        elif key == 'd':
+            return self.can_shift_right()
+        elif key == 'w':
+            return self.can_shift_up()
+        return False
         
     def can_shift_down(self):
         empty_count = 0
@@ -145,7 +189,7 @@ class GameArray:
             return False    
     
     def shift(self, direction):     
-        temp_previous_arr = self.get_arr()
+        prev_score = self.score
         
         prev = [0 for i in range(self.size**2)]
         k = 0
@@ -157,13 +201,15 @@ class GameArray:
         if direction == 'w' and self.can_shift_up():
             # append the current array "prev" (I know...) to undo_moves array
             # dequeue from undo moves such that it does not exceed 20 moves
+            # TO DO: make this a deque
             self.undo_moves.append(prev);
+            self.undo_score.append(prev_score)
             if len(self.undo_moves) > 20:
                 self.undo_moves = self.undo_moves[1:]
+            if len(self.undo_score) > 20:
+                self.undo_score = self.undo_score[1:]
                 
             # convoluted logic to transform (shift) game array based on the input move
-            # I wonder if there's a DP algorithm that I'm missing
-            # it works, though 8^)
             for j in range(0, self.size):
                 for i in range(0, self.size):
                     if self.arr[i][j] != 0:
@@ -188,10 +234,12 @@ class GameArray:
                                 if i - 1 == k and self.am[k][j] == False:
                                     self.arr[i][j] = 0
                                     self.arr[k][j] = self.arr[k][j] * 2
+                                    self.score += self.arr[k][j]
                                     self.am[k][j] = True
                                 elif empty_between == 0 and self.am[k][j] == False:
                                     self.arr[i][j] = 0
                                     self.arr[k][j] = self.arr[k][j] * 2
+                                    self.score += self.arr[k][j]
                                     self.am[k][j] = True
             self.add_next()
             self.reset_merged()
@@ -199,8 +247,12 @@ class GameArray:
         # see if statement above
         elif direction == 'a' and self.can_shift_left():
             self.undo_moves.append(prev);
+            self.undo_score.append(prev_score)
             if len(self.undo_moves) > 20:
                 self.undo_moves = self.undo_moves[1:]
+            if len(self.undo_score) > 20:
+                self.undo_score = self.undo_score[1:]
+                
             for i in range(0, self.size):
                 for j in range(0, self.size):
                     if self.arr[i][j] != 0:
@@ -221,10 +273,12 @@ class GameArray:
                                 if j - 1 == k and self.am[i][k] == False:
                                     self.arr[i][j] = 0
                                     self.arr[i][k] = self.arr[i][k] * 2
+                                    self.score += self.arr[i][k]
                                     self.am[i][k] = True
                                 elif empty_between == 0 and self.am[i][k] == False:
                                     self.arr[i][j] = 0
                                     self.arr[i][k] = self.arr[i][k] * 2
+                                    self.score += self.arr[i][k]
                                     self.am[i][k] = True
             self.add_next()              
             self.reset_merged()
@@ -232,8 +286,12 @@ class GameArray:
         # see if statement above
         elif direction == 's' and self.can_shift_down():
             self.undo_moves.append(prev);
+            self.undo_score.append(prev_score)
             if len(self.undo_moves) > 20:
                 self.undo_moves = self.undo_moves[1:]
+            if len(self.undo_score) > 20:
+                self.undo_score = self.undo_score[1:]
+                
             for j in range(0, self.size):
                 for i in range(self.size - 1, -1, -1):
                     if self.arr[i][j] != 0:
@@ -254,11 +312,13 @@ class GameArray:
                                 if i + 1 == k and self.am[k][j] == False:
                                     self.arr[i][j] = 0
                                     self.arr[k][j] = self.arr[k][j] * 2
+                                    self.score += self.arr[k][j]
                                     self.am[k][j] = True
                                     
                                 elif empty_between == 0 and self.am[k][j] == False:
                                     self.arr[i][j] = 0
                                     self.arr[k][j] = self.arr[k][j] * 2
+                                    self.score += self.arr[k][j]
                                     self.am[k][j] = True
                                     
             self.add_next()      
@@ -267,8 +327,12 @@ class GameArray:
         # see if statement above
         elif direction == 'd' and self.can_shift_right():
             self.undo_moves.append(prev);
+            self.undo_score.append(prev_score)
             if len(self.undo_moves) > 20:
                 self.undo_moves = self.undo_moves[1:]
+            if len(self.undo_score) > 20:
+                self.undo_score = self.undo_score[1:]
+
             for i in range(0, self.size):
                 for j in range(self.size - 1, -1, -1):
                     if self.arr[i][j] != 0:
@@ -289,10 +353,12 @@ class GameArray:
                                 if j + 1 == k and self.am[i][k] == False:
                                     self.arr[i][j] = 0
                                     self.arr[i][k] = self.arr[i][k] * 2
+                                    self.score += self.arr[i][k]
                                     self.am[i][k] = True
                                 elif empty_between == 0 and self.am[i][k] == False:
                                     self.arr[i][j] = 0
                                     self.arr[i][k] = self.arr[i][k] * 2
+                                    self.score += self.arr[i][k]
                                     self.am[i][k] = True
             self.add_next()      
             self.reset_merged()

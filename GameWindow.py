@@ -6,6 +6,9 @@ import os
 icon_dir = os.getcwd()+"\\icons\\"
 alt_icon_dir = os.getcwd()+"/icons/"
 
+pygame.init()
+font = pygame.font.SysFont(None, 24)
+
 class GameWindow:
     def __init__(self, size):
         # size: int, number of rows & columns
@@ -16,7 +19,9 @@ class GameWindow:
         self.screen.fill((215,240,255))
     
     # update pygame window with png files of corresponding tiles
-    def update_game_state(self, game_array):
+    def update_game_state(self, game_array, score):
+        img = font.render("Score: " + str(score), True, (0, 0, 0), (215,240,255))
+        self.screen.blit(img, (25, 15))
         for i in range(0, self.size):
             for j in range(0, self.size):
                 # try Windows file path, else use Mac/Linux file path

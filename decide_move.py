@@ -4,7 +4,7 @@ import random
 import DecisionNode as dn
 
 # make 100 decision trees and make the most common 'best' move among the trees,
-# based on 'best_score' in the 'best_move...' function
+# based on 'best_score' in the 'best_move_in_tree' function
 def decide_move(board, max_depth):
     best_moves = []
     for i in range(100):
@@ -18,7 +18,7 @@ def decide_move(board, max_depth):
         if board.can_shift(move):
             return move
     
-# do BFS to find the node with the best score, return first move that eventually lead to that node
+# do BFS to find the node with the best score, return first move that eventually leads to that node
 def best_move_in_tree(node):
     tree_count = 0
     best_score = node.weighted_sum
@@ -28,11 +28,12 @@ def best_move_in_tree(node):
     while Q:
         visited_node = Q.pop()
         tree_count += 1
-        # if (visited_node.corner_val + visited_node.score) >= best_score:
+        # check if current score is greater than or equal to max score, if it is, update best score and node
         if (visited_node.weighted_sum) >= best_score:
             best_node = visited_node
             best_move = visited_node.move_path[0]
             best_score = visited_node.weighted_sum
+        # enqueue children nodes
         if visited_node.up:
             Q.append(visited_node.up)
         if visited_node.right:

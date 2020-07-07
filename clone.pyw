@@ -41,13 +41,13 @@ def main():
         # move = move + " "
         # wasd_in = move[0]
         
-        wasd_in = dm.decide_move(board, 3)
+        wasd_in = dm.decide_move(board, 1)
         board.shift(wasd_in)
             
         curr_state = board.get_arr()
         window.update_game_state(board.arr, board.score) 
 
-        time.sleep(0.1)
+        time.sleep(0.01)
         
         if wasd_in == 'p':
             # f.close()
